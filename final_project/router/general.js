@@ -104,18 +104,34 @@ public_users.get('/author/:author',function (req, res) {
 });
 
 // Get all books based on title
-public_users.get('/title/:title',function (req, res) {
-    const title = req.params.title.replace('/%20/g', ' ').toLowerCase().trim()
-    if(title){
-        for (const key in books) {
-            if (books.hasOwnProperty(key) && books[key]['title'].toLowerCase() === title) {
-                res.send(JSON.stringify(books[key], null, 4))
-            }
-            }
-      }else{
-        return res.status(403).json({message: "No book with the title " + title})
+public_users.get('/title/:title', function (req, res) {
+  const title = req.params.title.replace('/%20/g', ' ').toLowerCase().trim();
+  
+  new Promise((resolve, reject) => {
+      try {
+          if (title) {
+              for (const key in books) {
+                  if (books.hasOwnProperty(key) && books[key]['title'].toLowerCase() === title) {
+                      resolve(books[key]);
+                      return; // Exit loop once book is found
+                  }
+              }
+              reject({ message: "No book with the title " + title });
+          } else {
+              reject({ message: "Title is empty" });
+          }
+      } catch (error) {
+          reject(error);
       }
+  })
+  .then((book) => {
+      res.send(JSON.stringify(book, null, 4));
+  })
+  .catch((error) => {
+      res.status(403).json({ message: error.message });
+  });
 });
+
 
 //  Get book review
 public_users.get('/review/:isbn',function (req, res) {
